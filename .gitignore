@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+
+# Инструменты
+.pytest_cache/
+.ruff_cache/
+
+# Окружение
+.env
+
+.idea/
