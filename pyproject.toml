@@ -45,6 +45,8 @@ select = [
 ]
 ignore = [
     "ANN401",   # Any допустим в **kwargs тулзов
+    # проект русскоязычный: кириллица в строках, докстрингах и комментариях — норма
+    "RUF001", "RUF002", "RUF003",
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -52,6 +54,6 @@ ignore = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--strict-markers --strict-config"
+addopts = "--strict-markers --strict-config -m 'not live'"
 asyncio_mode = "auto"
-markers = ["live: требует кредов GigaChat и сети"]
+markers = ["live: сценарии на живой GigaChat; по умолчанию исключены, запуск: pytest -m live"]

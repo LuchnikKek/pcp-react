@@ -1,0 +1,95 @@
+### HR-агент, PoC. Запуск:
+###   $env:GIGACHAT_CREDENTIALS="<ключ>"
+###   uv run uvicorn hr_agent.api.app:app --reload
+###
+### Синтетические пользователи (hr_agent/synthetic/directory.py):
+###   100001 — Иванов, сотрудник, руководитель 100010
+###   100010 — Сидоров, руководитель Иванова и Петровой
+###   100020 — Кузнецова, HR-партнёр (группа hr)
+###   100003 — Николаев, посторонний для 100001
+
+@host = http://127.0.0.1:8000
+
+### health
+GET {{host}}/health
+
+### Сценарий A, шаг 1: вопрос без уточнений — агент должен переспросить и завершить ход
+POST {{host}}/chat
+Content-Type: application/json
+
+{
+  "thread_id": "demo-a",
+  "user_id": "100001",
+  "message": "почему мне назначен курс?"
+}
+
+### Сценарий A, шаг 2: ответ на уточняющий вопрос — агент находит курс и причину
+POST {{host}}/chat
+Content-Type: application/json
+
+{
+  "thread_id": "demo-a",
+  "user_id": "100001",
+  "message": "по себе, «Школа скрам-мастеров»"
+}
+
+### Сценарий A, шаг 3: «а про другой курс?» — повтор шага без нового поиска инструкции
+POST {{host}}/chat
+Content-Type: application/json
+
+{
+  "thread_id": "demo-a",
+  "user_id": "100001",
+  "message": "а про «Информационная безопасность»?"
+}
+
+### Ответ типа progress: если предыдущий вызов вернул {"type":"progress"},
+### повторяем тот же тред с continue=true, пока не придёт final
+POST {{host}}/chat
+Content-Type: application/json
+
+{
+  "thread_id": "demo-a",
+  "user_id": "100001",
+  "continue": true
+}
+
+### Сценарий B: руководитель про подчинённого — AuthzMiddleware пропускает
+POST {{host}}/chat
+Content-Type: application/json
+
+{
+  "thread_id": "demo-b",
+  "user_id": "100010",
+  "message": "прошёл ли сотрудник 100002 курсы «Основы Agile» и «Информационная безопасность»?"
+}
+
+### Сценарий B': тот же вопрос от постороннего — AuthzMiddleware отказывает
+POST {{host}}/chat
+Content-Type: application/json
+
+{
+  "thread_id": "demo-b2",
+  "user_id": "100003",
+  "message": "покажи историю обучения сотрудника 100001"
+}
+
+### Сценарий C, шаг 1: заявка — агент должен спросить недостающие поля
+POST {{host}}/chat
+Content-Type: application/json
+
+{
+  "thread_id": "demo-c",
+  "user_id": "100001",
+  "message": "нужна справка о доходах"
+}
+
+### Сценарий C, шаг 2: ответ на уточнение — в ответе появляется ticket
+POST {{host}}/chat
+Content-Type: application/json
+
+{
+  "thread_id": "demo-c",
+  "user_id": "100001",
+  "message": "электронно, один экземпляр"
+}
